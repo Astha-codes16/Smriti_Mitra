@@ -1,0 +1,2 @@
+import PageIntro from './PageIntro';
+export default function EyeSense() { return <PageIntro eyebrow="Gentle awareness" title="EyeSense" icon="◉" description="A quiet way to notice attention, comfort, and the moments around you." accent="sage" />; }

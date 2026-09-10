@@ -1,0 +1,7 @@
+import { useVoice } from '../context/VoiceContext';
+
+export default function GlobalVoiceAssistant() {
+  const { isListening, isProcessing, recognizedText, interimText, responseText, error, startListening, stopListening } = useVoice();
+  const label = isListening ? 'Listening...' : isProcessing ? 'MindMate is understanding...' : responseText ? 'MindMate replied' : 'Tap to speak';
+  return <aside className={`global-voice-assistant ${isListening ? 'global-voice-listening' : ''} ${isProcessing ? 'global-voice-processing' : ''}`} aria-live="polite"><div className="global-voice-copy"><span className="eyebrow">MindMate voice</span><strong>{label}</strong>{isListening && interimText && <small className="global-voice-interim"><b>You are saying:</b> “{interimText}”</small>}{recognizedText && !isListening && <small><b>You said:</b> “{recognizedText}”</small>}{responseText && <small className="global-voice-response">{responseText}</small>}{error && <small className="global-voice-error">{error}</small>}</div><button type="button" onClick={startListening} aria-label={isListening ? 'Listening' : 'Tap to speak'} aria-pressed={isListening}><span>{isProcessing ? '🧠' : responseText && !isListening ? '🔊' : '🎙️'}</span></button>{isListening && <button className="global-voice-stop" type="button" onClick={stopListening} aria-label="Stop listening">■</button>}</aside>;
+}
