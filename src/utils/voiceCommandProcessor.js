@@ -54,6 +54,9 @@ export function processVoiceCommand(command) {
     return result('MOOD', responses[moodMatch[1]], moodMatch[0], { mood: moodMatch[1], destination: 'mood-check' });
   }
 
+  const whatShouldIDoNow = /what should i do( now| next)?$|what do i do( now| next)?$|what do i need to do( now| next)?$|what should i do$|what do i have to do now$|what is next$|whats next$|tell me what i should do( next)?$|tell me what to do next$/.test(normalizedCommand);
+  if (whatShouldIDoNow) return result('WHAT_SHOULD_I_DO_NOW', '', 'what should i do', { destination: 'my-day' });
+
   const comfortKeyword = includesAny(normalizedCommand, ['relax', 'peace', 'peaceful', 'calm', 'comfort', 'comfortable', 'rest']);
   if (comfortKeyword) return result('COMFORT_ZONE', "Let's spend a peaceful moment together.", comfortKeyword, { section: 'relax', destination: 'comfort-zone' });
   if (normalizedCommand.includes('music')) return result('COMFORT_MUSIC', "Let's listen to something comforting.", 'music', { section: 'music', destination: 'comfort-zone' });

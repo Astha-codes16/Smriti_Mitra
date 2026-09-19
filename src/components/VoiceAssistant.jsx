@@ -8,7 +8,7 @@ export default function VoiceAssistant({ listening: providedListening, onToggle:
 		<section className={`voice-assistant ${listening ? 'voice-listening' : ''}`}>
 			<div className="voice-copy">
 				<span className="eyebrow">Your gentle helper</span>
-				<h2>MindMate is ready</h2>
+				<h2>SmritiMitra is ready</h2>
 				<p>{listening ? 'I am listening...' : 'Tap and speak'}</p>
 			</div>
 			<button className="mic-button" type="button" onClick={onToggle} aria-label={listening ? 'Stop listening' : 'Start voice assistant'} aria-pressed={listening}>

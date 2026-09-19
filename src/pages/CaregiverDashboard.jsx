@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { patient } from '../data/demoData';
 import { getStoredState, saveStoredState } from '../services/storageService';
+import FamiliarVoiceSettings from '../components/FamiliarVoiceSettings';
+import { testFamiliarVoice } from '../services/familiarVoiceService';
 
 const demoPerformance = [82, 75, 88, 80, 85, 78, 84];
 const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -65,7 +67,9 @@ export default function CaregiverDashboard() {
 
     <div className="care-three-column"><section className="care-section care-panel-modern"><div className="care-section-title"><div><span className="eyebrow">Voice-first support</span><h2>🎙️ VOICE INTERACTION</h2></div></div><div className="voice-care-big">{voiceHistory.length || 12}<small>commands today</small></div><p className="care-pair"><span>Most used</span><b>&quot;{topCommand}&quot;</b></p><p className="care-pair"><span>Success rate</span><b>{voiceHistory.length ? Math.round((successfulCommands / voiceHistory.length) * 100) : 92}%</b></p></section><section className="care-section care-panel-modern"><div className="care-section-title"><div><span className="eyebrow">Close connections</span><h2>❤️ FAMILY CONNECTION</h2></div></div><div className="family-care-big">❤️ <strong>3</strong><span>family moments today</span></div><div className="care-pair"><span>Last interaction</span><b>Rahul · Today at 5:30 PM</b></div><button className="care-outline-button" type="button" onClick={() => showMessage('A call reminder is ready for Rahul.')}>📞 Check in with Ramesh</button></section><section className="care-insight-card"><span>🧠</span><span className="eyebrow">MindMate observation</span><h2>MINDMATE INSIGHT</h2><p>{insight}</p><small>Based on recent activity patterns.</small></section></div>
 
-    <section className="care-section quick-action-panel"><div className="care-section-title"><div><span className="eyebrow">For the care circle</span><h2>🚨 QUICK ACTIONS</h2></div></div><div className="care-quick-actions"><button type="button" onClick={() => window.location.href = 'tel:+919876543210'}>📞 Call Patient</button><button type="button" onClick={() => showMessage('Reminder sent to Ramesh’s My Day.')}>🔔 Send Reminder</button><button type="button" onClick={() => showMessage('A warm encouragement is ready for Ramesh.')}>💬 Send Encouragement</button><button type="button" onClick={() => setShowRoutineEditor(true)}>📅 Update Routine</button></div></section>
+    <FamiliarVoiceSettings onVoiceChange={(p) => showMessage(p ? `Familiar voice configured for ${p.name}` : 'Default voice restored')} />
+
+    <section className="care-section quick-action-panel"><div className="care-section-title"><div><span className="eyebrow">For the care circle</span><h2>🚨 QUICK ACTIONS</h2></div></div><div className="care-quick-actions"><button type="button" onClick={() => window.location.href = 'tel:+919876543210'}>📞 Call Patient</button><button type="button" onClick={() => { showMessage('Voice reminder sent to Ramesh’s My Day.'); testFamiliarVoice('Ramesh Ji, your family has sent a gentle reminder: It is time to take your medicine.'); }}>🔔 Send Voice Reminder</button><button type="button" onClick={() => { showMessage('A warm encouragement is ready for Ramesh.'); testFamiliarVoice('Hello Ramesh Ji! We love you very much and are thinking of you today.'); }}>💬 Send Encouragement</button><button type="button" onClick={() => setShowRoutineEditor(true)}>📅 Update Routine</button></div></section>
     {message && <div className="care-dashboard-toast" role="status">✅ {message}</div>}
   </div>;
 }

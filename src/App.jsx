@@ -13,6 +13,7 @@ import MoodCheck from './pages/MoodCheck';
 import EyeSense from './pages/EyeSense';
 import ComfortZone from './pages/ComfortZone';
 import CaregiverDashboard from './pages/CaregiverDashboard';
+import { schedule } from './data/demoData';
 
 const patientScreens = {
   home: Home,
@@ -78,6 +79,14 @@ export default function App() {
       navigate('mood-check');
       console.log('NAVIGATION REQUESTED:', 'mood-check');
       return;
+    }
+    if (command.intent === 'WHAT_SHOULD_I_DO_NOW') {
+      navigate('my-day');
+      console.log('NAVIGATION REQUESTED:', 'my-day');
+      if (schedule.current === 'Medicine') return 'You need to take your medicine now.';
+      if (schedule.current === 'Breakfast') return "It's time for breakfast.";
+      if (schedule.current === 'Brain Activity') return 'Your next activity is a memory game.';
+      return 'You have no activity right now. You can relax or choose something from My Day.';
     }
     if (command.intent === 'COMFORT') {
       setPendingObject(null);

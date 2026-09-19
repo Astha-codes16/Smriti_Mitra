@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { createRecognition, isSpeechRecognitionSupported, speak as speakText, stopSpeaking } from '../services/voiceService';
+import { createRecognition, isSpeechRecognitionSupported } from '../services/voiceService';
+import { speakWithFamiliarVoice, stopSpeaking as stopFamiliarSpeaking, getVoiceProfile, isFamiliarVoiceActive } from '../services/familiarVoiceService';
 import { processVoiceCommand } from '../utils/voiceCommandProcessor';
 import { getStoredState, saveStoredState } from '../services/storageService';
 
@@ -38,7 +39,7 @@ export function VoiceProvider({ children, onCommand }) {
       }].slice(-100),
     });
     if (result.intent === 'STOP') {
-      stopSpeaking();
+      stopFamiliarSpeaking();
       pendingResponseRef.current = '';
       setResponseText('');
       setIsProcessing(false);
@@ -69,7 +70,7 @@ export function VoiceProvider({ children, onCommand }) {
         setInterimText('');
         const response = pendingResponseRef.current;
         pendingResponseRef.current = '';
-        if (response) speakText(response);
+        if (response) speakWithFamiliarVoice(response);
       },
       onInterim: (text) => setInterimText(text),
       onResult: (text) => processCommandRef.current?.(text),
@@ -109,7 +110,30 @@ export function VoiceProvider({ children, onCommand }) {
     setIsListening(false);
   }
 
-  return <VoiceContext.Provider value={{ isListening, isProcessing, recognizedText, interimText, responseText, error, startListening, stopListening, processCommand, speak: speakText }}>{children}</VoiceContext.Provider>;
+  const familiarProfile = getVoiceProfile();
+  const isFamiliarActive = isFamiliarVoiceActive();
+
+  return (
+    <VoiceContext.Provider
+      value={{
+        isListening,
+        isProcessing,
+        recognizedText,
+        interimText,
+        responseText,
+        error,
+        startListening,
+        stopListening,
+        processCommand,
+        speak: speakWithFamiliarVoice,
+        stopSpeaking: stopFamiliarSpeaking,
+        familiarProfile,
+        isFamiliarActive,
+      }}
+    >
+      {children}
+    </VoiceContext.Provider>
+  );
 }
 
 export function useVoice() {

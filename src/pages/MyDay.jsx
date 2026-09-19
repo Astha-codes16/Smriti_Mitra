@@ -14,7 +14,7 @@ const upcomingActivities = [
 ];
 
 export default function MyDay({ navigate }) {
-  const { isListening: listening, startListening: onVoiceToggle } = useVoice();
+  const { isListening: listening, startListening: onVoiceToggle, speak } = useVoice();
   const [reminderShown, setReminderShown] = useState(false);
   const [brainCompleted, setBrainCompleted] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
@@ -22,7 +22,8 @@ export default function MyDay({ navigate }) {
 
   function remindLater() {
     setReminderShown(true);
-    window.setTimeout(() => setReminderShown(false), 3500);
+    speak(`Don't worry ${patient.shortName}. It is almost time for your evening medicine at 9:00 PM.`);
+    window.setTimeout(() => setReminderShown(false), 4500);
   }
 
   return (

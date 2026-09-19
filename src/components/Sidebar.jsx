@@ -14,7 +14,7 @@ export default function Sidebar({ mode, activeScreen, onNavigate, onModeChange, 
 				<div className="brand">
 					<div className="brand-mark">M</div>
 					<div>
-						<strong>mindmate</strong>
+						<strong>SmritiMitra</strong>
 						<span>memory support</span>
 					</div>
 				</div>
@@ -49,7 +49,7 @@ export default function Sidebar({ mode, activeScreen, onNavigate, onModeChange, 
 						<span className="sun-icon">☼</span>
 						<div><strong>Take it easy</strong><span>You are doing well today.</span></div>
 					</div>
-					<span className="version">MindMate MVP · 2026</span>
+					<span className="version">SmritiMitra MVP · 2026</span>
 				</div>
 			</aside>
 			{isOpen && <button className="sidebar-overlay" type="button" aria-label="Close navigation" onClick={onClose} />}

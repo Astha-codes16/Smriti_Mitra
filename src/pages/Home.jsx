@@ -38,7 +38,7 @@ export default function Home({ navigate, listening, onVoiceToggle }) {
 
       <section className="home-bottom-grid">
         <div className="today-card">
-          <div className="section-heading"><div><span className="eyebrow">A little look ahead</span><h2>Today with MindMate</h2></div><button className="text-button" type="button" onClick={() => navigate('my-day')}>View full day <span>→</span></button></div>
+          <div className="section-heading"><div><span className="eyebrow">A little look ahead</span><h2>Today with SmritiMitra</h2></div><button className="text-button" type="button" onClick={() => navigate('my-day')}>View full day <span>→</span></button></div>
           <div className="timeline-row"><span className="timeline-mark done">✓</span><div><strong>Breakfast</strong><span>Completed this morning</span></div><span className="timeline-time">8:00 AM</span></div>
           <div className="timeline-row current"><span className="timeline-mark">✦</span><div><strong>{schedule.current}</strong><span>Your next gentle activity</span></div><span className="timeline-time">Now</span></div>
           <div className="timeline-row"><span className="timeline-mark upcoming">○</span><div><strong>{schedule.upcoming[0]}</strong><span>Coming up later</span></div><span className="timeline-time">10:30 AM</span></div>
