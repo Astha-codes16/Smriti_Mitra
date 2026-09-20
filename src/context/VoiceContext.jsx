@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { createRecognition, isSpeechRecognitionSupported } from '../services/voiceService';
-import { speakWithFamiliarVoice, stopSpeaking as stopFamiliarSpeaking, getVoiceProfile, isFamiliarVoiceActive } from '../services/familiarVoiceService';
+import {
+  speakWithFamiliarVoice,
+  stopSpeaking as stopFamiliarSpeaking,
+  getVoiceProfile,
+  isFamiliarVoiceActive,
+  subscribeSpeechStatus,
+  getSpeechStatus,
+} from '../services/familiarVoiceService';
 import { processVoiceCommand } from '../utils/voiceCommandProcessor';
 import { getStoredState, saveStoredState } from '../services/storageService';
 
@@ -13,11 +20,18 @@ export function VoiceProvider({ children, onCommand }) {
   const [interimText, setInterimText] = useState('');
   const [responseText, setResponseText] = useState('');
   const [error, setError] = useState('');
+  const [speechStatus, setSpeechStatus] = useState(() => getSpeechStatus());
   const recognitionRef = useRef(null);
   const listeningRef = useRef(false);
   const pendingResponseRef = useRef('');
   const commandHandlerRef = useRef(onCommand);
   const processCommandRef = useRef(null);
+
+  useEffect(() => {
+    return subscribeSpeechStatus((status) => {
+      setSpeechStatus(status);
+    });
+  }, []);
 
   commandHandlerRef.current = onCommand;
 
@@ -129,6 +143,7 @@ export function VoiceProvider({ children, onCommand }) {
         stopSpeaking: stopFamiliarSpeaking,
         familiarProfile,
         isFamiliarActive,
+        speechStatus,
       }}
     >
       {children}

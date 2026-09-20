@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "voice:server": "py -3.12 voice-server/server.py",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

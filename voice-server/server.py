@@ -21,7 +21,21 @@ import numpy as np
 
 from pocket_tts_onnx import PocketTTSOnnx
 
-app = FastAPI(title="MindMate Neural Voice Cloning Server (PocketTTS ONNX)")
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Pre-warm model in background
+    try:
+        get_model()
+    except Exception as e:
+        print(f"[PocketTTS ONNX] Startup warning: {e}")
+    yield
+
+app = FastAPI(
+    title="MindMate Neural Voice Cloning Server (PocketTTS ONNX)",
+    lifespan=lifespan,
+)
 
 # Allow requests from React frontend (Vite dev server)
 app.add_middleware(
@@ -57,14 +71,6 @@ def get_model():
         print(f"[PocketTTS ONNX] Model loaded once in {model_load_time_seconds:.2f}s (Sample Rate: {tts_model.sample_rate} Hz)")
     return tts_model
 
-@app.on_event("startup")
-async def startup_event():
-    # Pre-warm model in background
-    try:
-        get_model()
-    except Exception as e:
-        print(f"[PocketTTS ONNX] Startup warning: {e}")
-
 @app.get("/health")
 def health():
     return {
@@ -94,7 +100,14 @@ async def register_reference(reference_audio: UploadFile = File(...)):
         temp_ref.write(content)
         temp_ref.close()
         t0 = time.time()
-        voice_emb = model.encode_voice(temp_ref.name)
+        try:
+            voice_emb = model.encode_voice(temp_ref.name)
+        except Exception as encode_err:
+            print(f"[PocketTTS ONNX] Error decoding reference audio from {filename}: {encode_err}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Could not decode reference audio. Please provide a valid 16-bit PCM WAV file: {encode_err}"
+            )
         cached_voice_embeddings = voice_emb
         cached_reference_hash = audio_hash
         extract_time = time.time() - t0
@@ -138,7 +151,14 @@ async def generate_voice(
                 try:
                     temp_ref.write(content)
                     temp_ref.close()
-                    voice_input = model.encode_voice(temp_ref.name)
+                    try:
+                        voice_input = model.encode_voice(temp_ref.name)
+                    except Exception as encode_err:
+                        print(f"[PocketTTS ONNX] Error decoding reference audio from {filename}: {encode_err}")
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Could not decode reference audio. Please provide a valid 16-bit PCM WAV file: {encode_err}"
+                        )
                     cached_voice_embeddings = voice_input
                     cached_reference_hash = audio_hash
                 finally:

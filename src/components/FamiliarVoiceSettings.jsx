@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { family } from '../data/demoData';
+import { convertAudioBlobToWav, validateWavHeader } from '../utils/audioUtils';
 import {
   getVoiceProfile,
   saveVoiceProfile,
@@ -20,6 +21,7 @@ export default function FamiliarVoiceSettings({ onVoiceChange }) {
   const [profile, setProfile] = useState(() => getVoiceProfile() || DEFAULT_PROFILE);
   const [isSaved, setIsSaved] = useState(() => Boolean(getVoiceProfile()));
   const [uploadedFileName, setUploadedFileName] = useState('');
+  const [sampleDetails, setSampleDetails] = useState(null);
   const [selectedPerson, setSelectedPerson] = useState(() => {
     const existing = getVoiceProfile();
     return existing ? existing.name : 'Anita';
@@ -106,12 +108,38 @@ export default function FamiliarVoiceSettings({ onVoiceChange }) {
         }
       };
 
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const url = setVoiceSample(audioBlob);
-        setSampleUrl(url);
-        stream.getTracks().forEach((track) => track.stop());
-        showStatus('Caregiver reference voice sample registered successfully!');
+      mediaRecorder.onstop = async () => {
+        try {
+          showStatus('Converting browser recording to 24 kHz 16-bit PCM mono WAV...');
+          const rawBlob = new Blob(audioChunksRef.current, { type: mediaRecorder.mimeType || 'audio/webm' });
+
+          // FIX 1: Convert recorded audio to genuine 24,000 Hz 16-bit PCM mono WAV
+          const wavConversion = await convertAudioBlobToWav(rawBlob, 24000);
+
+          // FIX 2: Validate WAV header before setting or transmitting
+          const validation = await validateWavHeader(wavConversion.blob);
+          if (!validation.valid) {
+            throw new Error(validation.error);
+          }
+
+          const url = setVoiceSample(wavConversion.blob);
+          setSampleUrl(url);
+          const micFileName = `caregiver_mic_${Math.round(wavConversion.duration)}s.wav`;
+          setUploadedFileName(micFileName);
+          setSampleDetails({
+            duration: wavConversion.duration,
+            sampleRate: wavConversion.sampleRate,
+            format: 'RIFF PCM 16-bit Mono (24 kHz)',
+            sizeBytes: wavConversion.byteSize,
+          });
+
+          showStatus(`Caregiver voice sample converted & registered (${wavConversion.duration.toFixed(1)}s, 24kHz Mono WAV)!`);
+        } catch (convErr) {
+          console.error('[FamiliarVoice] WAV conversion error:', convErr);
+          setErrorMessage(`Audio conversion failed: ${convErr.message}. Please try recording again.`);
+        } finally {
+          stream.getTracks().forEach((track) => track.stop());
+        }
       };
 
       mediaRecorder.start(100);
@@ -143,7 +171,7 @@ export default function FamiliarVoiceSettings({ onVoiceChange }) {
     setIsRecording(false);
   }
 
-  // Handle file upload
+  // Handle file upload with conversion to 24 kHz mono 16-bit PCM WAV
   async function handleFileUpload(event) {
     setErrorMessage('');
     const file = event.target.files?.[0];
@@ -155,16 +183,35 @@ export default function FamiliarVoiceSettings({ onVoiceChange }) {
       return;
     }
 
-    setUploadedFileName(file.name);
-    const url = setVoiceSample(file);
-    setSampleUrl(url);
-    showStatus(`Uploading "${file.name}" to neural voice engine...`);
+    try {
+      showStatus(`Converting "${file.name}" to verified 24 kHz mono WAV...`);
+      const wavConversion = await convertAudioBlobToWav(file, 24000);
+      const validation = await validateWavHeader(wavConversion.blob);
+      if (!validation.valid) {
+        throw new Error(validation.error);
+      }
 
-    const result = await registerSampleWithServer(file, file.name);
-    if (result && result.success) {
-      showStatus(`Caregiver voice sample "${file.name}" registered successfully with neural engine!`);
-    } else {
-      showStatus(`Caregiver voice sample "${file.name}" loaded successfully.`);
+      const outName = file.name.replace(/\.[^.]+$/, '') + '_24k.wav';
+      setUploadedFileName(outName);
+      const url = setVoiceSample(wavConversion.blob);
+      setSampleUrl(url);
+      setSampleDetails({
+        duration: wavConversion.duration,
+        sampleRate: wavConversion.sampleRate,
+        format: 'RIFF PCM 16-bit Mono (24 kHz)',
+        sizeBytes: wavConversion.byteSize,
+      });
+
+      showStatus(`Uploading verified WAV "${outName}" to neural voice engine...`);
+      const result = await registerSampleWithServer(wavConversion.blob, outName);
+      if (result && result.success) {
+        showStatus(`Caregiver voice sample "${outName}" registered successfully with neural engine!`);
+      } else {
+        showStatus(`Caregiver voice sample "${outName}" processed locally.`);
+      }
+    } catch (err) {
+      console.error('[FamiliarVoice] File processing error:', err);
+      setErrorMessage(`Could not process audio file: ${err.message}`);
     }
   }
 
@@ -359,8 +406,13 @@ export default function FamiliarVoiceSettings({ onVoiceChange }) {
               <strong>Caregiver Voice Reference Sample</strong>
               <small>Provide a 3-5 second sample (e.g., &ldquo;Hello beta, how are you today?&rdquo;) to extract voice characteristics.</small>
               {uploadedFileName && (
-                <div style={{ fontSize: '12px', color: '#0284c7', marginTop: '4px', fontWeight: 500 }}>
-                  📄 Active Sample File: <b>{uploadedFileName}</b>
+                <div style={{ fontSize: '12px', color: '#0284c7', marginTop: '4px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span>📄 Active Sample: <b>{uploadedFileName}</b></span>
+                  {sampleDetails && (
+                    <span style={{ color: '#166534', background: '#dcfce7', border: '1px solid #bbf7d0', padding: '1px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
+                      ✓ {sampleDetails.format} · {sampleDetails.duration.toFixed(1)}s
+                    </span>
+                  )}
                 </div>
               )}
             </div>
